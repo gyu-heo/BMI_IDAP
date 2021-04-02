@@ -1,0 +1,13 @@
+README.md
+setup.py
+BMI_IDAP.egg-info/PKG-INFO
+BMI_IDAP.egg-info/SOURCES.txt
+BMI_IDAP.egg-info/dependency_links.txt
+BMI_IDAP.egg-info/requires.txt
+BMI_IDAP.egg-info/top_level.txt
+bmi_idap/__init__.py
+bmi_idap/helpers/__init__.py
+bmi_idap/helpers/getVideoDirectoryProperties.py
+bmi_idap/helpers/mtaper_specgram.py
+bmi_idap/helpers/welford_moving.py
+bmi_idap/helpers/welford_moving_2D.py
