@@ -40,7 +40,7 @@ def getVideoDirectoryProperties(multiple_files_pref , dir_vid , fileName_vid_pre
         ## first find all the files in the directory with the file name prefix
         fileNames_allInPathWithPrefix = []
         for ii in os.listdir(dir_vid):
-            if os.path.isfile(os.path.join(dir_vid,ii)) and fileName_vid_prefix in ii:
+            if os.path.isfile(os.path.join(dir_vid,ii)) and fileName_vid_prefix in ii and fileName_vid_suffix in ii:
                 fileNames_allInPathWithPrefix.append(ii)
         numVids = len(fileNames_allInPathWithPrefix)
         
