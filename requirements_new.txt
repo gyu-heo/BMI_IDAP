@@ -1,0 +1,11 @@
+opencv-python
+imageio
+matplotlib
+pandas
+scanimage-tiff-reader
+varname
+numba
+tqdm
+h5py
+hdfdict
+opt_einsum
