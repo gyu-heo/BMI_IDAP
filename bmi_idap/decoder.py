@@ -21,7 +21,7 @@ import torch
 
 
 class Decoder_angle_magnitude:
-    def __init__(self, F=None, power=2.0, dtype=torch.float32, device='cpu'):
+    def __init__(self, F, power=2.0, dtype=torch.float32, device='cpu'):
         """
         Angle-magnitude decoder.
 
@@ -45,8 +45,11 @@ class Decoder_angle_magnitude:
         if isinstance(F, np.ndarray):
             self.F = torch.as_tensor(F).type(self._dtype).to(self._device)
         else:
-            self.F = F
+            self.F = F.type(self._dtype).to(self._device)
         assert isinstance(self.F, torch.Tensor), "F must be a torch.Tensor or np.ndarray."
+
+        self.n_components = int(self.F.shape[1])
+        self.d_bools = torch.cat([torch.arange(0, self.n_components)[None,:] == ii for ii in range(self.n_components)], dim=0).type(self._dtype).to(self._device)  # shape: (n_components, n_components)
 
     def __call__(self, X, F=None, power=None):
         """
@@ -68,13 +71,13 @@ class Decoder_angle_magnitude:
         Returns:
             D (torch.Tensor):
                 Values for each decoder dimension.
-                Shape: (n_timepoints, n_components)
+                Shape: (n_components, n_timepoints)
             CS (torch.Tensor):
                 Cosine similarity between each decoder dimension and each timepoint.
-                Shape: (n_timepoints, n_components)
+                Shape: (n_components, n_timepoints)
             M (torch.Tensor):
                 Magnitude of each decoder dimension.
-                Shape: (n_timepoints, n_components)
+                Shape: (n_components, n_timepoints)
         """
         # Convert to torch.Tensor
         if isinstance(X, np.ndarray):
@@ -83,7 +86,7 @@ class Decoder_angle_magnitude:
             if isinstance(F, np.ndarray):
                 F = torch.as_tensor(F).type(self._dtype).to(self._device)
         else:
-            F = self.F
+            F = self.F.type(self._dtype).to(self._device)
         assert F is not None, "F must be provided as an argument or as an attribute."
         
         p = float(power) if power is not None else self.power
@@ -95,11 +98,11 @@ class Decoder_angle_magnitude:
             F = F[:,None]
 
         # Compute factor magnitudes
-        M = (X.T @ F) / torch.linalg.norm(F, dim=0)  # shape: (n_timepoints, n_components)
+        M = ((X.T @ F) / torch.linalg.norm(F, dim=0)).T  # shape: (n_components, n_timepoints)
 
         # Compute cursor as (cosine_similarity(D, i) * projection_magnitude(D_i))**p
-        d_bools = torch.cat([torch.arange(0, M.shape[1])[None,:] == ii for ii in range(M.shape[1])], dim=0)  # shape: (n_components, n_components)
-        CS = torch.cat([torch.nn.functional.cosine_similarity(M, db_ii[None,:], dim=1, eps=1e-8)[:,None] for db_ii in d_bools], dim=1) # shape: (n_timepoints, n_components)
-        D = torch.abs(CS)**p * M  # shape: (n_timepoints, n_components)
+        # d_bools = torch.cat([torch.arange(0, M.shape[1])[None,:] == ii for ii in range(M.shape[1])], dim=0).type(self._dtype).to(self._device)  # shape: (n_components, n_components)
+        CS = torch.cat([torch.nn.functional.cosine_similarity(M, db_ii[:,None], dim=0, eps=1e-8)[None,:] for db_ii in self.d_bools], dim=0)  # shape: (n_components, n_timepoints)
+        D = torch.abs(CS)**p * M  # shape: (n_components, n_timepoints)
 
         return D, CS, M
