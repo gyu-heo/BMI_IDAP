@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: BMI-IDAP
+Version: 0.1.0
+Summary: BMI interday analysis pipeline
+Author: Rich Hakim
+License: MIT
+License-File: LICENSE
