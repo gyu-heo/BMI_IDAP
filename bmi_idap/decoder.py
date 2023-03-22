@@ -102,7 +102,8 @@ class Decoder_angle_magnitude:
 #         X -= torch.mean(X, dim=0)[None,:]
 
         # Compute factor magnitudes
-        M = ((X.T @ F) / torch.linalg.norm(F, dim=0)).T  # shape: (n_components, n_timepoints)
+        # M = ((X.T @ F) / torch.linalg.norm(F, dim=0)).T  # shape: (n_components, n_timepoints)
+        M = (torch.nansum(X[:,:,None] * F[:,None,:], dim=0) / torch.linalg.norm(F, dim=0)).T  # shape: (n_components, n_timepoints)
 #         M = ((F.T @ X) / torch.linalg.norm(X, dim=0))  # shape: (n_components, n_timepoints)
 #         M = torch.linalg.norm(X, dim=0)  # shape: (n_components, n_timepoints)
 
