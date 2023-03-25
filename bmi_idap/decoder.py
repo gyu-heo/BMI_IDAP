@@ -102,7 +102,8 @@ class Decoder_angle_magnitude:
 #         X -= torch.mean(X, dim=0)[None,:]
 
         # Compute factor magnitudes
-        M = ((X.T @ F) / torch.linalg.norm(F, dim=0)).T  # shape: (n_components, n_timepoints)
+        # M = ((X.T @ F) / torch.linalg.norm(F, dim=0)).T  # shape: (n_components, n_timepoints)
+        M = (torch.nansum(X[:,:,None] * F[:,None,:], dim=0) / torch.linalg.norm(F, dim=0)).T  # shape: (n_components, n_timepoints)
 #         M = ((F.T @ X) / torch.linalg.norm(X, dim=0))  # shape: (n_components, n_timepoints)
 #         M = torch.linalg.norm(X, dim=0)  # shape: (n_components, n_timepoints)
 
@@ -127,7 +128,21 @@ class Decoder_angle_magnitude:
     
 
 # Cursor simulation
-def simple_cursor_simulation(D, CS, idx_cursor=0, idx_avg=-1, thresh_reward=1.0, thresh_quiescence_avgVec=0.9, thresh_quiescence_cursor=0.2, duration_quiescence_hold=5, duration_threshold_hold=3, win_smooth_cursor=3):
+def simple_cursor_simulation(
+    D, 
+    CS,
+    M, 
+    idx_cursor=0, 
+    idx_avg=-1, 
+    thresh_reward=1.0, 
+#     thresh_quiescence_avgVec=0.9, 
+    thresh_quiescence_cursorMag=0.2, 
+#     thresh_quiescence_cursor=0.2, 
+    thresh_quiescence_cursorDecoder=0.2, 
+    duration_quiescence_hold=5, 
+    duration_threshold_hold=3, 
+    win_smooth_cursor=3
+):
     n_samples = D.shape[0]
     sm = {
         'rewards': np.zeros(n_samples, dtype=int),
@@ -154,9 +169,10 @@ def simple_cursor_simulation(D, CS, idx_cursor=0, idx_avg=-1, thresh_reward=1.0,
     D_smooth = bnpm.timeSeries.convolve_torch(D, kernel, padding='same')
     
     
-    for ii, (d, cs) in tqdm(enumerate(zip(D_smooth, CS)), total=len(D_smooth)):
+    for ii, (d, cs, m) in tqdm(enumerate(zip(D_smooth, CS, M)), total=len(D_smooth)):
 #         CS_quiescence = d[idx_avg] >= thresh_quiescence
-        CS_quiescence = (cs[idx_avg] >= thresh_quiescence_avgVec) * (d[idx_cursor] <= thresh_quiescence_cursor)
+#         CS_quiescence = (cs[idx_avg] >= thresh_quiescence_avgVec) * (d[idx_cursor] <= thresh_quiescence_cursor)
+        CS_quiescence = (m[idx_cursor] <= thresh_quiescence_cursorMag) * (d[idx_cursor] <= thresh_quiescence_cursorDecoder)
 #         CS_quiescence = cs.argmax() == idx_avg
         sm['CS_quiescence'][ii] = CS_quiescence
         
