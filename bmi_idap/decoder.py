@@ -133,11 +133,8 @@ def simple_cursor_simulation(
     CS,
     M, 
     idx_cursor=0, 
-    idx_avg=-1, 
     thresh_reward=1.0, 
-#     thresh_quiescence_avgVec=0.9, 
     thresh_quiescence_cursorMag=0.2, 
-#     thresh_quiescence_cursor=0.2, 
     thresh_quiescence_cursorDecoder=0.2, 
     duration_quiescence_hold=5, 
     duration_threshold_hold=3, 
@@ -152,7 +149,6 @@ def simple_cursor_simulation(
         'CE_trial': np.zeros(n_samples, dtype=int),
         'CS_quiescence': np.zeros(n_samples, dtype=int),
         'cursor': np.zeros(n_samples, dtype=float),
-        'timeSeries_avgVec': np.zeros(n_samples, dtype=float),
     }
     
     num_reward = 0
@@ -160,8 +156,6 @@ def simple_cursor_simulation(
     counter_quiescence = 0
     counter_threshold = 0
     
-    if idx_avg < 0:
-        idx_avg = D.shape[1] + idx_avg
         
     kernel = np.concatenate((np.zeros(win_smooth_cursor), np.ones(win_smooth_cursor)))
     kernel = torch.as_tensor(kernel, device=D.device, dtype=D.dtype) if isinstance(D, torch.Tensor) else kernel
@@ -170,10 +164,7 @@ def simple_cursor_simulation(
     
     
     for ii, (d, cs, m) in tqdm(enumerate(zip(D_smooth, CS, M)), total=len(D_smooth)):
-#         CS_quiescence = d[idx_avg] >= thresh_quiescence
-#         CS_quiescence = (cs[idx_avg] >= thresh_quiescence_avgVec) * (d[idx_cursor] <= thresh_quiescence_cursor)
         CS_quiescence = (m[idx_cursor] <= thresh_quiescence_cursorMag) * (d[idx_cursor] <= thresh_quiescence_cursorDecoder)
-#         CS_quiescence = cs.argmax() == idx_avg
         sm['CS_quiescence'][ii] = CS_quiescence
         
         if CE_trial:
@@ -200,6 +191,5 @@ def simple_cursor_simulation(
         sm['counter_threshold'][ii] = counter_threshold
         
         sm['cursor'][ii] = d[idx_cursor].cpu().numpy()
-        sm['timeSeries_avgVec'][ii] = cs[idx_avg].cpu().numpy()
                 
     return num_reward, sm
