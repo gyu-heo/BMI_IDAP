@@ -17,14 +17,14 @@ def orthogonalize_matrix(arr):
 def find_EVR_neuralData_factors(neural_data, factors, device='cpu'):
     """
     neural_data (torch.Tensor):
-        shape: (neurons, time)
+        shape: (neurons, time) (but can be transposed)
     factors (torch.Tensor):
-        shape: (factor, time)
+        shape: (factor, time) or (factor, neurons)
     """
-    out = [bnpm.similarity.pairwise_orthogonalization_torch(
-        torch.as_tensor(neural_data).T.type(torch.float32).to(device), 
+    out = [bnpm.similarity.orthogonalize(
+        torch.as_tensor(neural_data).type(torch.float32).to(device), 
         torch.as_tensor(factors[ii]).type(torch.float32).to(device), 
-        center=True,
+        method='OLS',
         device=device) for ii in range(len(factors))]
 
     EVR_total_weighted = np.array([o[2].cpu().numpy() for o in out])
@@ -32,9 +32,9 @@ def find_EVR_neuralData_factors(neural_data, factors, device='cpu'):
     
     return EVR, EVR_total_weighted
 
-def order_factors_by_EVR(factors, data, device='cpu'):
+def order_factors_by_EVR(data, factors, device='cpu'):
     EVR, EVR_total_weighted = find_EVR_neuralData_factors(data, factors, device=device)
     idx_ordered = np.argsort(EVR_total_weighted)[::-1]
     factors_ordered = factors[idx_ordered]
     
-    return factors_ordered, idx_ordered
+    return factors_ordered, idx_ordered, EVR_total_weighted[idx_ordered]
